@@ -8,31 +8,41 @@ All secrets and cryptographic keys are **automatically generated** via `./deploy
 
 ## Architecture Overview
 
-```text
-                                  Internet
-                                     │
-                     [Port 80 / 443 / 51820 / 21820]
-                                     ▼
-                            Target Host / VPS
-   ┌─────────────────────────────────────────────────────────────┐
-   │ Gerbil (WireGuard Network Namespace)                        │
-   │  ├── Listens on 80/tcp, 443/tcp, 443/udp, 51820/udp, 21820/udp│
-   │  │                                                          │
-   │  └── Traefik v3.7 Proxy (service:gerbil network mode)       │
-   │       ├── Automatic Let's Encrypt TLS Certificates          │
-   │       ├── Dynamic routing synced via Pangolin HTTP endpoint │
-   │       └── CrowdSec Traefik Bouncer Plugin                   │
-   │                                                             │
-   │ Pangolin Manager                                            │
-   │  ├── Web Dashboard & REST API (/api/v1)                     │
-   │  ├── Resource & Target Tunnel Management                    │
-   │  └── Embedded SQLite Database (config/db)                   │
-   │                                                             │
-   │ CrowdSec Intrusion Prevention System                        │
-   │  ├── Real-time AppSec WAF on Port 7422                      │
-   │  ├── Traefik access log parser & remediation                │
-   │  └── Community blocklists                                   │
-   └─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Internet["Internet Traffic"]
+        client["Web Clients & WireGuard Peers"]
+    end
+
+    subgraph Host["Target Host / VPS (UFW & Fail2ban)"]
+        direction TB
+
+        subgraph GerbilNet["Gerbil Network Namespace"]
+            gerbil["Gerbil WireGuard<br/><code>51820/udp & 21820/udp</code>"]
+            traefik["Traefik v3.7 Reverse Proxy<br/><code>80/tcp & 443/tcp,udp</code>"]
+        end
+
+        subgraph CrowdSecStack["CrowdSec IPS & WAF"]
+            crowdsec["CrowdSec Engine<br/><code>AppSec WAF :7422 | LAPI :8080</code>"]
+            hub["Community Blocklists & Hub Scenarios"]
+        end
+
+        subgraph PangolinStack["Pangolin Core"]
+            pangolin["Pangolin Manager<br/><code>API :3000 | Web UI :3002</code>"]
+            db[(Embedded SQLite DB<br/><code>config/db</code>)]
+        end
+    end
+
+    client -->|"HTTP: 80 / HTTPS: 443"| traefik
+    client -->|"WireGuard Tunnel"| gerbil
+    
+    traefik -->|"Inspect HTTP (WAF)"| crowdsec
+    crowdsec -.->|"Stream Decisions"| traefik
+    crowdsec --- hub
+
+    traefik -->|"Proxy Dynamic Routes"| pangolin
+    gerbil <-->|"Internal WG Namespace"| traefik
+    pangolin --> db
 ```
 
 ---
