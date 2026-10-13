@@ -231,10 +231,19 @@ if [[ -d "${SCRIPT_DIR}/.git" ]]; then
   chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "${SCRIPT_DIR}"
 fi
 
+USER_HAS_PASSWORD=false
+if passwd -S "${DEPLOY_USER}" 2>/dev/null | awk '{print $2}' | grep -q "^P"; then
+  USER_HAS_PASSWORD=true
+fi
+
 echo "================================================================================"
 echo " ==> [SUCCESS] VPS bootstrap & hardening complete!"
 echo " User:           ${DEPLOY_USER}"
 echo " SSH Port:       ${SSH_PORT}"
-echo " Next Step:      Log in via 'ssh -p ${SSH_PORT} ${DEPLOY_USER}@<vps-ip>'"
-echo "                 and set user password with 'sudo passwd ${DEPLOY_USER}'."
+if [[ "${USER_HAS_PASSWORD}" == "true" ]] || [[ "${SUDO_USER:-}" == "${DEPLOY_USER}" ]]; then
+  echo " Next Step:      Run './deploy.sh' to deploy the stack."
+else
+  echo " Next Step:      Log in via 'ssh -p ${SSH_PORT} ${DEPLOY_USER}@<vps-ip>'"
+  echo "                 and set user password with 'sudo passwd ${DEPLOY_USER}'."
+fi
 echo "================================================================================"
