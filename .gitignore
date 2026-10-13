@@ -1,0 +1,31 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Secrets & Live Configurations (NEVER COMMIT)
+.env
+config/config.yml
+config/traefik/dynamic_config.yml
+config/traefik/traefik_config.yml
+config/key
+!configs/*.example
+
+# Persistent Storage, Databases & Logs
+*.db
+*.sqlite
+*.sqlite3
+*.tar.gz
+config/db/
+config/crowdsec/db/
+config/traefik/logs/
+logs/
+**/logs/
+
+# SSL Certificates & ACME secrets
+*.pem
+*.key
+*.crt
+acme.json
+config/letsencrypt/
