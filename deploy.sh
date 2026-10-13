@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Hardened Pangolin Stack Deployment Script
+# Pangolin Stack Deployment Script
 # Supports:
 #   1. Running from scratch on a blank VPS (requires PANGOLIN_DOMAIN and PANGOLIN_BASE_DOMAIN)
 #   2. Running on an existing VPS (safely detects domain and updates containers without overwriting)

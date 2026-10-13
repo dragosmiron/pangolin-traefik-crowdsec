@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# VPS Bootstrap & OS Hardening Script for Pangolin Stack
-# Prepares a blank Ubuntu/Debian VPS with hardened SSH, Fail2ban, UFW, and Docker.
+# VPS Bootstrap & Setup Script for Pangolin Stack
+# Prepares a blank Ubuntu/Debian VPS with SSH security, Fail2ban, UFW, and Docker.
 # Run as root.
 
 if [[ $EUID -ne 0 ]]; then

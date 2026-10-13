@@ -1,6 +1,6 @@
-# Hardened Pangolin Docker Stack (with Gerbil, Traefik v3.7 & CrowdSec AppSec WAF)
+# Pangolin Docker Stack (with Gerbil, Traefik v3.7 & CrowdSec AppSec WAF)
 
-Production-ready, hardened deployment configuration for self-hosting [Pangolin](https://github.com/fosrl/pangolin) reverse-proxy and secure WireGuard tunnel manager, powered by **Gerbil**, **Traefik v3.7** with automatic Let's Encrypt TLS, and **CrowdSec AppSec WAF**.
+Production-ready deployment configuration for self-hosting [Pangolin](https://github.com/fosrl/pangolin) reverse-proxy and secure WireGuard tunnel manager, powered by **Gerbil**, **Traefik v3.7** with automatic Let's Encrypt TLS, and **CrowdSec AppSec WAF**.
 
 All secrets and cryptographic keys are **automatically generated** via `./deploy.sh` on fresh installs. Existing installations are automatically detected and safely updated without overwriting secrets or wiping databases.
 
@@ -48,7 +48,7 @@ This repository uses generic placeholders throughout the documentation, configur
 | `*.yourdomain.com` | Wildcard domain routing client traffic to created tunnels | `*.example.org`, `*.mycompany.io` | Wildcard DNS A record |
 | `admin@yourdomain.com` | Administrator email for ACME TLS certificate registration | `noc@example.org`, `devops@mycompany.io` | `LETSENCRYPT_EMAIL`, Let's Encrypt notifications |
 | `203.0.113.10` | Public IPv4 address of your VPS / Host server *(RFC 5737 placeholder)* | `198.51.100.42` | DNS **A** record target in your DNS provider |
-| `48222` | Hardened SSH port configured during OS bootstrap | Any custom port between `1024` and `65535` | `SSH_PORT` environment variable |
+| `48222` | Custom SSH port configured during OS bootstrap | Any custom port between `1024` and `65535` | `SSH_PORT` environment variable |
 | `deploy` | Dedicated non-root user created for running services | Any standard username (e.g. `ubuntu`, `admin`) | `DEPLOY_USER` in `bootstrap-os.sh` |
 
 ---
