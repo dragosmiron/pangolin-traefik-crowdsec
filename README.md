@@ -10,39 +10,18 @@ All secrets and cryptographic keys are **automatically generated** via `./deploy
 
 ```mermaid
 flowchart TD
-    subgraph Internet["Internet Traffic"]
-        client["Web Clients & WireGuard Peers"]
-    end
+    traffic([Inbound Internet Traffic]) --> L1
 
-    subgraph Host["Target Host / VPS (UFW & Fail2ban)"]
+    subgraph Defense["Hardened Security Pipeline (Provided by Stack)"]
         direction TB
-
-        subgraph GerbilNet["Gerbil Network Namespace"]
-            gerbil["Gerbil WireGuard<br/><code>51820/udp & 21820/udp</code>"]
-            traefik["Traefik v3.7 Reverse Proxy<br/><code>80/tcp & 443/tcp,udp</code>"]
-        end
-
-        subgraph CrowdSecStack["CrowdSec IPS & WAF"]
-            crowdsec["CrowdSec Engine<br/><code>AppSec WAF :7422 | LAPI :8080</code>"]
-            hub["Community Blocklists & Hub Scenarios"]
-        end
-
-        subgraph PangolinStack["Pangolin Core"]
-            pangolin["Pangolin Manager<br/><code>API :3000 | Web UI :3002</code>"]
-            db[(Embedded SQLite DB<br/><code>config/db</code>)]
-        end
+        L1["Layer 1: OS Hardening<br/>UFW Minimal Ports • Fail2ban 24h Jail • Kernel Network Hardening"]
+        L2["Layer 2: Edge Reverse Proxy (Traefik v3.7)<br/>Automatic Let's Encrypt TLS • CrowdSec Bouncer Middleware"]
+        L3["Layer 3: AppSec WAF (CrowdSec Engine)<br/>Real-Time L7 Inspection • Virtual Patching (.env / CVEs) • Threat Intel"]
     end
 
-    client -->|"HTTP: 80 / HTTPS: 443"| traefik
-    client -->|"WireGuard Tunnel"| gerbil
-    
-    traefik -->|"Inspect HTTP (WAF)"| crowdsec
-    crowdsec -.->|"Stream Decisions"| traefik
-    crowdsec --- hub
-
-    traefik -->|"Proxy Dynamic Routes"| pangolin
-    gerbil <-->|"Internal WG Namespace"| traefik
-    pangolin --> db
+    L1 --> L2
+    L2 <-->|"Inspect & Remediate"| L3
+    L2 --> App["Pangolin & Gerbil Core<br/>Protected WireGuard Tunnel Manager"]
 ```
 
 ---
