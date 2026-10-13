@@ -23,8 +23,9 @@ server:
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
         allowed_headers: ["X-CSRF-Token", "Content-Type"]
         credentials: false
-    maxmind_db_path: "./config/GeoLite2-Country.mmdb"
-    maxmind_asn_path: "./config/GeoLite2-ASN.mmdb"
+    # Optional MaxMind GeoIP / ASN databases (uncomment if you supply .mmdb files)
+    # maxmind_db_path: "./config/GeoLite2-Country.mmdb"
+    # maxmind_asn_path: "./config/GeoLite2-ASN.mmdb"
 
 flags:
     require_email_verification: false
