@@ -225,6 +225,12 @@ fi
 systemctl enable docker || true
 systemctl restart docker || true
 
+# If script was run from a git repository cloned by root, transfer ownership to DEPLOY_USER
+if [[ -d "${SCRIPT_DIR}/.git" ]]; then
+  echo "==> Ensuring ${DEPLOY_USER} owns deployment directory (${SCRIPT_DIR})..."
+  chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "${SCRIPT_DIR}"
+fi
+
 echo "================================================================================"
 echo " ==> [SUCCESS] VPS bootstrap & hardening complete!"
 echo " User:           ${DEPLOY_USER}"
