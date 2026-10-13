@@ -15,13 +15,7 @@ DEPLOY_USER="${DEPLOY_USER:-deploy}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORCE="${FORCE:-false}"
 
-echo "================================================================================"
-echo " ==> VPS Bootstrap & Hardening Initialization"
-echo " Target User:       ${DEPLOY_USER}"
-echo " Custom SSH Port:   ${SSH_PORT}"
-echo "================================================================================"
-
-# --- 0. PRE-FLIGHT CHECK: VERIFY AND CONFIRM SSH AUTHORIZED KEYS ---
+# --- 0. PRE-FLIGHT CHECK: VERIFY AND LOCATE SSH AUTHORIZED KEYS ---
 AUTH_KEYS_FILE=""
 if [[ -s "/root/.ssh/authorized_keys" ]]; then
   AUTH_KEYS_FILE="/root/.ssh/authorized_keys"
@@ -42,14 +36,19 @@ if [[ -z "${AUTH_KEYS_FILE}" ]]; then
   exit 1
 fi
 
-echo ""
-echo "==> Detected SSH Public Key(s) to be authorized for '${DEPLOY_USER}':"
-echo "--------------------------------------------------------------------------------"
-ssh-keygen -lf "${AUTH_KEYS_FILE}" 2>/dev/null || cat "${AUTH_KEYS_FILE}"
-echo "--------------------------------------------------------------------------------"
+echo "================================================================================"
+echo " ==> VPS Bootstrap & Hardening Configuration Summary"
+echo " Target Dedicated User: ${DEPLOY_USER}"
+echo " Custom SSH Port:       ${SSH_PORT}"
+echo " Authorized SSH Key(s):"
+ssh-keygen -lf "${AUTH_KEYS_FILE}" 2>/dev/null | sed 's/^/   /' || sed 's/^/   /' "${AUTH_KEYS_FILE}"
+echo " Password Policy:       Lock root password, enforce SSH keys, passwordless sudo"
+echo " Firewall (UFW):        Deny inbound, allow ports ${SSH_PORT}, 80, 443, 3478, 51820, 21820"
+echo " Security Tools:        Fail2ban, unattended-upgrades, kernel network hardening"
+echo "================================================================================"
 
 if [[ "${FORCE}" != "true" ]] && [[ -t 0 ]]; then
-  read -r -p "Confirm using this SSH key to harden user '${DEPLOY_USER}' and lock passwords? [y/N]: " confirm
+  read -r -p "Proceed with these bootstrap settings? [y/N]: " confirm
   if [[ "${confirm}" != [yY] && "${confirm}" != [yY][eE][sS] ]]; then
     echo "Aborted by user. No changes were made."
     exit 1
