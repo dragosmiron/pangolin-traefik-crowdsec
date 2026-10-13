@@ -137,15 +137,13 @@ if [[ ! -f config/config.yml ]]; then
   fi
 fi
 
-# Safeguard: if config/config.yml has maxmind paths but .mmdb files are absent, comment them out to prevent crash
+# Safeguard: if config/config.yml has legacy maxmind paths but .mmdb files are absent, remove them to prevent crash
 if [[ -f config/config.yml ]]; then
-  if grep -q "^[[:space:]]*maxmind_db_path:" config/config.yml && [[ ! -f config/GeoLite2-Country.mmdb ]]; then
-    echo "    [NOTE] MaxMind GeoLite2-Country.mmdb not found. Commenting out maxmind_db_path in config.yml..."
-    sed -i.bak -e "s|^[[:space:]]*maxmind_db_path:|    # maxmind_db_path:|" config/config.yml && rm -f config/config.yml.bak
+  if grep -q "maxmind_db_path:" config/config.yml && [[ ! -f config/GeoLite2-Country.mmdb ]]; then
+    sed -i.bak -e "/maxmind_db_path:/d" config/config.yml && rm -f config/config.yml.bak
   fi
-  if grep -q "^[[:space:]]*maxmind_asn_path:" config/config.yml && [[ ! -f config/GeoLite2-ASN.mmdb ]]; then
-    echo "    [NOTE] MaxMind GeoLite2-ASN.mmdb not found. Commenting out maxmind_asn_path in config.yml..."
-    sed -i.bak -e "s|^[[:space:]]*maxmind_asn_path:|    # maxmind_asn_path:|" config/config.yml && rm -f config/config.yml.bak
+  if grep -q "maxmind_asn_path:" config/config.yml && [[ ! -f config/GeoLite2-ASN.mmdb ]]; then
+    sed -i.bak -e "/maxmind_asn_path:/d" config/config.yml && rm -f config/config.yml.bak
   fi
 fi
 
