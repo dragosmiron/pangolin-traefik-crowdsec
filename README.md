@@ -37,6 +37,24 @@ All secrets and cryptographic keys are **automatically generated** via `./deploy
 
 ---
 
+## Security, Rate Limiting & Protection Model
+
+This stack implements multi-layered defense-in-depth across both the host OS and application layers:
+
+### 1. SSH Rate Limiting & Brute-Force Defense
+* **Key-Only Authentication**: Root password login and keyboard-interactive authentication are disabled.
+* **Connection Throttling**: The SSH daemon disconnects sessions after 3 failed authentication attempts (`MaxAuthTries 3`).
+* **Automated 24-Hour Firewall Ban**: Fail2ban monitors SSH connection attempts via an aggressive jail (`maxretry = 3`, `findtime = 10m`, `bantime = 24h`), dropping offending IPs at the firewall level.
+* **CrowdSec SSH Tracking**: CrowdSec actively parses SSH authentication logs to detect and ban rapid brute-force attacks (`ssh-bf`), slow distributed attacks (`ssh-slow-bf`), and port scanning (`ssh-refused-conn`).
+
+### 2. Application & API Rate Limiting (CrowdSec + Traefik)
+* **Layer 7 AppSec WAF**: Traefik inspects inbound HTTP requests through the CrowdSec AppSec engine on port 7422, blocking virtual patches, SQLi, XSS, and directory probes (`.env`, `/.git`, etc.) with `403 Forbidden` before they reach Pangolin.
+* **HTTP Brute-Force Protection (`http-generic-bf`)**: High-frequency repeated requests hammering login endpoints or API routes are automatically detected and banned.
+* **Aggressive Web Scraper & Crawler Mitigation (`http-crawl-non_statics`)**: Automated high-velocity scrapers hitting non-static application endpoints are throttled and banned.
+* **Global Threat Intelligence**: Traefik's CrowdSec bouncer continuously blocks malicious IP addresses distributed via the global CrowdSec consensus blocklist.
+
+---
+
 ## Generic Placeholders & How to Replace Them
 
 This repository uses generic placeholders throughout the documentation, configuration templates, and deploy scripts. When preparing your deployment, replace these placeholders with your actual server and domain values:
