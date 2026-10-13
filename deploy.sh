@@ -84,9 +84,24 @@ fi
 
 mkdir -p config/traefik/logs config/letsencrypt config/crowdsec/acquis.d config/db
 
-echo "    Dashboard Domain:    ${DOMAIN}"
-echo "    Base Domain:         ${BASE_DOMAIN}"
-echo "    Let's Encrypt Email: ${LE_EMAIL}"
+FORCE="${FORCE:-false}"
+
+echo ""
+echo "================================================================================"
+echo " ==> Deployment Configuration Summary"
+echo " Dashboard Domain:    ${DOMAIN}"
+echo " Base Domain:         ${BASE_DOMAIN}"
+echo " Let's Encrypt Email: ${LE_EMAIL}"
+echo " Deployment Type:     $([[ -n "${EXISTING_DOMAIN}" ]] && echo 'Existing In-Place Update' || echo 'Fresh Installation')"
+echo "================================================================================"
+
+if [[ "${FORCE}" != "true" ]] && [[ -t 0 ]]; then
+  read -r -p "Proceed with these settings? [y/N]: " confirm
+  if [[ "${confirm}" != [yY] && "${confirm}" != [yY][eE][sS] ]]; then
+    echo "Aborted by user. No changes were made."
+    exit 1
+  fi
+fi
 
 # 3. Generate config/traefik/traefik_config.yml if missing
 if [[ ! -f config/traefik/traefik_config.yml ]]; then
