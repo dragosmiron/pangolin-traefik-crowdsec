@@ -46,6 +46,9 @@ echo " Password Policy:       Lock root password, enforce SSH keys, passwordless
 echo " Firewall (UFW):        Deny inbound, allow ports ${SSH_PORT}, 80, 443, 3478, 51820, 21820"
 echo " Security Tools:        Fail2ban, unattended-upgrades, kernel network hardening"
 echo "================================================================================"
+echo " To customize these values (e.g. SSH_PORT, DEPLOY_USER), see README.md."
+echo " Press Ctrl+C or answer 'n' to abort and adjust your environment variables."
+echo "================================================================================"
 
 if [[ "${FORCE}" != "true" ]] && [[ -t 0 ]]; then
   read -r -p "Proceed with these bootstrap settings? [y/N]: " confirm
