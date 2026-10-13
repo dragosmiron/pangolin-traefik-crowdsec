@@ -56,8 +56,6 @@ cat > /etc/fail2ban/jail.local << EOF
 bantime = 1h
 findtime = 10m
 maxretry = 3
-banaction = ufw
-banaction_allports = ufw
 
 [sshd]
 enabled = true

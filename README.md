@@ -53,14 +53,34 @@ This repository uses generic placeholders throughout the documentation, configur
 
 ---
 
-## Supported Operating Systems
+## Supported Operating Systems & Required Binaries
 
-| Linux Distribution | Version / Release | Support Level | Notes |
+`deploy.sh` is distro-agnostic and will run on **any modern Linux distribution** (Ubuntu, Debian, Fedora, Arch, Rocky, Alpine, etc.) provided the following CLI binaries are available in your `$PATH`:
+
+| Binary | Minimum / Tested Version | Purpose in Stack | How to Install (Examples) |
 | :--- | :--- | :--- | :--- |
-| **Ubuntu** | `24.04 LTS`, `22.04 LTS`, `20.04 LTS` | **Tier 1 (Recommended)** | Fully tested. Automated bootstrap support. |
-| **Debian** | `12 (Bookworm)`, `11 (Bullseye)` | **Tier 1 (Primary)** | Fully supported by `bootstrap-os.sh` (Docker APT, UFW, Fail2ban). |
-| **Debian-derived (Raspbian/Armbian)** | Debian 11/12 base (`amd64`, `arm64`) | **Supported** | Compatible architectures: `x86_64` / `amd64` and `arm64`. |
-| **RHEL / Rocky / AlmaLinux / Fedora** | 8, 9, Fedora 39+ | **Deploy-only** | `./deploy.sh` works out-of-the-box (uses Docker Compose). Run native firewalld instead of `bootstrap-os.sh`. |
+| **`docker`** | `24.0+` (with Compose v2 plugin) | Container runtime and stack orchestration | Official Docker repo or distro package manager |
+| **`openssl`** | `1.1.1` or `3.x` | Generates cryptographic server secrets & bouncer API keys | `apt install openssl` / `dnf install openssl` / `pacman -S openssl` |
+| **`bash`** | `4.0+` | Script execution environment (`set -euo pipefail`) | Standard shell (`/bin/bash`) |
+| **`sed`** | GNU `sed` or standard BSD | Instantiates runtime templates from `.example` files | Pre-installed on almost all distros |
+| **`curl`** or **`dig`** | Any | DNS verification and endpoint health checks | `apt install dnsutils curl` / `dnf install bind-utils curl` |
+
+### Distribution Support Level:
+* **Ubuntu & Debian:** Running `./bootstrap-os.sh` automates the entire OS setup (Docker, UFW firewall, Fail2ban with aggressive SSH jail).
+* **Fedora, RHEL, Rocky, AlmaLinux, Arch, openSUSE:**
+  1. Install `docker` and `openssl` via your native package manager (`dnf`, `pacman`, `zypper`).
+  2. Fail2ban will automatically use your native firewall (e.g. `firewallcmd-rich-rules` on RHEL/Fedora or `nftables` on Arch).
+  3. Allow Pangolin's required ports in your native firewall (e.g., for `firewalld`):
+     ```bash
+     sudo firewall-cmd --permanent --add-port=48222/tcp  # Your custom SSH port
+     sudo firewall-cmd --permanent --add-port=80/tcp     # ACME / HTTP
+     sudo firewall-cmd --permanent --add-port=443/tcp    # HTTPS / Websecure
+     sudo firewall-cmd --permanent --add-port=443/udp    # HTTP/3 / QUIC
+     sudo firewall-cmd --permanent --add-port=51820/udp  # Gerbil WireGuard tunnel
+     sudo firewall-cmd --permanent --add-port=21820/udp  # Gerbil WireGuard data tunnel
+     sudo firewall-cmd --reload
+     ```
+  4. Run `./deploy.sh` directly.
 
 ---
 
