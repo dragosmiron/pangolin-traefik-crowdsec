@@ -10,8 +10,28 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-SSH_PORT="${SSH_PORT:-39422}"
-DEPLOY_USER="${DEPLOY_USER:-deploy}"
+# Auto-detect existing custom SSH port if already configured
+DETECTED_SSH_PORT=""
+if [[ -f /etc/ssh/sshd_config.d/00-hardening.conf ]] && grep -q "^Port " /etc/ssh/sshd_config.d/00-hardening.conf; then
+  DETECTED_SSH_PORT="$(grep "^Port " /etc/ssh/sshd_config.d/00-hardening.conf | head -n1 | awk '{print $2}' | tr -d '\r\n')"
+elif grep -q "^Port " /etc/ssh/sshd_config 2>/dev/null; then
+  DETECTED_SSH_PORT="$(grep "^Port " /etc/ssh/sshd_config | head -n1 | awk '{print $2}' | tr -d '\r\n')"
+fi
+
+# Auto-detect calling user if invoked via sudo or existing primary non-root user
+DETECTED_USER=""
+if [[ -n "${SUDO_USER:-}" ]] && [[ "${SUDO_USER}" != "root" ]]; then
+  DETECTED_USER="${SUDO_USER}"
+else
+  # Check if a non-root user with UID 1000 exists
+  UID_1000_USER="$(awk -F: '$3 == 1000 {print $1}' /etc/passwd 2>/dev/null || true)"
+  if [[ -n "${UID_1000_USER}" ]]; then
+    DETECTED_USER="${UID_1000_USER}"
+  fi
+fi
+
+SSH_PORT="${SSH_PORT:-${DETECTED_SSH_PORT:-39422}}"
+DEPLOY_USER="${DEPLOY_USER:-${DETECTED_USER:-deploy}}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FORCE="${FORCE:-false}"
 
@@ -21,6 +41,8 @@ if [[ -s "/root/.ssh/authorized_keys" ]]; then
   AUTH_KEYS_FILE="/root/.ssh/authorized_keys"
 elif [[ -s "/home/${DEPLOY_USER}/.ssh/authorized_keys" ]]; then
   AUTH_KEYS_FILE="/home/${DEPLOY_USER}/.ssh/authorized_keys"
+elif [[ -n "${DETECTED_USER}" ]] && [[ -s "/home/${DETECTED_USER}/.ssh/authorized_keys" ]]; then
+  AUTH_KEYS_FILE="/home/${DETECTED_USER}/.ssh/authorized_keys"
 fi
 
 if [[ -z "${AUTH_KEYS_FILE}" ]]; then
