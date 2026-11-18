@@ -20,6 +20,9 @@ This stack implements defense-in-depth across the host OS, network ingress, and 
 - **Firewall Policy (UFW)**:
   - Default policy: `deny incoming`, `allow outgoing`.
   - Only required ports are whitelisted: SSH, `80/tcp`, `443/tcp,udp`, `51820/udp`, `21820/udp`.
+- **Unattended Security Upgrades**:
+  - Automatically installs critical OS security and kernel patches via `unattended-upgrades`.
+  - Configures bounded automatic restarts (`04:00 AM`) only when an update explicitly flags a required reboot (`/etc/apt/apt.conf.d/52unattended-upgrades-reboot`).
 
 ---
 

@@ -89,6 +89,13 @@ apt-get install -y curl ufw fail2ban git sudo htop openssl ca-certificates gnupg
 # Enable automatic security upgrades
 systemctl enable --now unattended-upgrades || true
 
+# Configure automatic reboot at 04:00 AM only when security updates require it
+cat > /etc/apt/apt.conf.d/52unattended-upgrades-reboot <<'EOF'
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+EOF
+
 echo "==> 2. Setting up dedicated user (${DEPLOY_USER})..."
 if ! id "${DEPLOY_USER}" &>/dev/null; then
   useradd -m -s /bin/bash "${DEPLOY_USER}"
