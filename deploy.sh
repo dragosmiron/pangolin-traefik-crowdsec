@@ -5,16 +5,75 @@ set -euo pipefail
 # Supports:
 #   1. Running from scratch on a blank VPS (requires PANGOLIN_DOMAIN and PANGOLIN_BASE_DOMAIN)
 #   2. Running on an existing VPS (safely detects domain and updates containers without overwriting)
+#   3. One-command automated stack updates via --update
+#   4. Remote execution via --remote <ssh-target> [--update]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
+
+# Remote execution delegation
+if [[ "${1:-}" == "--remote" ]]; then
+  REMOTE_TARGET="${2:-}"
+  if [[ -z "${REMOTE_TARGET}" ]]; then
+    echo "[ERROR] Missing remote SSH host! Usage: ./deploy.sh --remote user@host [--update]" >&2
+    exit 1
+  fi
+  shift 2
+  REMOTE_ACTION="${*:-}"
+  REMOTE_DIR="${REMOTE_DIR:-/opt/pangolin}"
+  echo "==> [Pangolin] Delegating deployment/update to remote host: ${REMOTE_TARGET} (${REMOTE_DIR})..."
+  # Sync deploy.sh and docker-compose.yml to remote directory
+  scp "${SCRIPT_DIR}/deploy.sh" "${SCRIPT_DIR}/docker-compose.yml" "${REMOTE_TARGET}:${REMOTE_DIR}/"
+  ssh "${REMOTE_TARGET}" "chmod +x ${REMOTE_DIR}/deploy.sh && cd ${REMOTE_DIR} && ./deploy.sh ${REMOTE_ACTION}"
+  exit 0
+fi
+
+# Dedicated option for full one-command stack update
+if [[ "${1:-}" == "--update" ]] || [[ "${1:-}" == "--upgrade" ]]; then
+  echo "==> [Pangolin] Starting automated stack update..."
+
+  # 1. Automatic configuration backup
+  BACKUP_DIR="../$(basename "${PWD}").bak-$(date +%Y%m%d%H%M%S)"
+  echo "    --> Backing up current configuration to ${BACKUP_DIR}..."
+  mkdir -p "${BACKUP_DIR}"
+  for f in config docker-compose.yml config.tar.gz; do
+    if [[ -e "${f}" ]]; then
+      cp -a "${f}" "${BACKUP_DIR}/"
+    fi
+  done
+
+  # 2. Pull latest container images
+  echo "    --> Pulling latest container images..."
+  docker compose pull
+
+  # 3. In-place container recreation
+  echo "    --> Recreating containers..."
+  docker compose up -d
+
+  # 4. Update CrowdSec security rules
+  if docker compose ps crowdsec 2>/dev/null | grep -q "Up"; then
+    echo "    --> Updating CrowdSec Hub rules & AppSec virtual patches..."
+    docker compose exec -T crowdsec cscli hub update || true
+    docker compose exec -T crowdsec cscli hub upgrade || true
+    docker compose kill -s HUP crowdsec || true
+  fi
+
+  # 5. Clean up dangling images
+  echo "    --> Pruning old dangling images..."
+  docker image prune -f
+
+  # 6. Status check
+  echo "==> [Pangolin] Update finished successfully. Status:"
+  docker compose ps
+  exit 0
+fi
 
 # Dedicated option to update CrowdSec threat intelligence & AppSec virtual patches
 if [[ "${1:-}" == "--update-rules" ]] || [[ "${1:-}" == "--update-security" ]]; then
   echo "==> [Pangolin] Updating CrowdSec Hub rules & AppSec virtual patches..."
   docker compose exec -T crowdsec cscli hub update
   docker compose exec -T crowdsec cscli hub upgrade
-  docker compose exec -T crowdsec cscli reload
+  docker compose kill -s HUP crowdsec
   echo "==> [Pangolin] CrowdSec security rules updated successfully."
   exit 0
 fi

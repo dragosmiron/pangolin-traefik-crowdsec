@@ -63,10 +63,17 @@ PANGOLIN_DOMAIN="pangolin.yourdomain.com" PANGOLIN_BASE_DOMAIN="yourdomain.com" 
 
 ## Common Operations
 
-### Safe In-Place Updates
-Pull latest updates without touching existing secrets or wiping databases:
+### Safe In-Place Updates (One Command)
+Run a full automated update (creates a configuration backup, pulls latest container images, recreates services, updates CrowdSec threat rules, and prunes old images):
+
+**Directly on the VPS:**
 ```bash
-cd /opt/pangolin && git pull && ./deploy.sh
+cd /opt/pangolin && ./deploy.sh --update
+```
+
+**Remotely from your local machine:**
+```bash
+./deploy.sh --remote root@cloudserver --update
 ```
 
 ### Update CrowdSec Security Rules & Threat Intelligence
